@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Pre-Production Suite · Storyboards, Animatics & Call Sheets</title>
-<meta name="description" content="3D previs storyboards with posable mannequins, multi-camera setups with real lens data, auto shot framing, animated camera moves, animatic export, and A4 storyboard & call sheet PDFs." />
+<meta name="description" content="3D previs storyboards with posable IK mannequins, multi-camera setups with real lens data, auto shot framing, animated camera moves, animatic export, and A4 storyboard & call sheet PDFs." />
 <style>
 :root{
   --bg:#0d0f13; --panel:#14171d; --panel2:#1a1e26; --line:#262b35; --line2:#323947;
@@ -83,7 +83,11 @@ input[type=color].ctl{padding:2px;height:30px;cursor:pointer}
 .chip.on{background:#2a2414;border-color:var(--accent);color:var(--accent2)}
 .camchip{display:inline-flex;align-items:center;gap:6px}
 .camchip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+.seg button{height:28px;border:none;background:var(--bg);cursor:pointer;font-size:12px;color:var(--mute)}
+.seg button.on{background:#2a2414;color:var(--accent2);font-weight:600}
 .hint{color:var(--dim);font-size:11.5px;line-height:1.5}
+.warn{color:#f3c56f;font-size:11.5px;line-height:1.5;background:#2a2414;border:1px solid #5a4720;border-radius:6px;padding:6px 8px;margin-bottom:8px}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
 .kv dt{color:var(--mute)} .kv dd{text-align:right;font-variant-numeric:tabular-nums}
 .check{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;color:#cfd3db}
@@ -100,6 +104,7 @@ input[type=color].ctl{padding:2px;height:30px;cursor:pointer}
 .joints{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px}
 .joints .chip{text-align:center;border-radius:6px}
 .joints .chip.c{grid-column:span 2}
+.joints .chip.ik{border-style:dashed;color:#9fc6ff}
 .keys{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;font-size:12px;align-items:center}
 .keys dt{white-space:nowrap}
 .keys dt span{display:inline-block;border:1px solid var(--line2);background:var(--panel2);border-radius:4px;padding:1px 6px;font-size:11px;margin:0 2px 0 0}
@@ -112,7 +117,6 @@ input[type=color].ctl{padding:2px;height:30px;cursor:pointer}
 #vheader select.ctl{height:26px;width:auto;font-size:12px;padding:0 6px}
 #viewport{position:relative;overflow:hidden;background:#000;min-height:0}
 #viewport canvas.main{display:block;outline:none;position:absolute}
-/* Timeline (Blender-style) */
 #timeline{display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);min-width:0}
 #timeline .tb{width:30px;height:26px;border-radius:6px;border:1px solid var(--line2);background:var(--panel2);cursor:pointer;font-size:12px}
 #timeline .tb:hover:not(:disabled){border-color:var(--accent)}
@@ -181,6 +185,7 @@ input[type=color].ctl{padding:2px;height:30px;cursor:pointer}
 .frame .num{position:absolute;top:5px;left:5px;background:#000b;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:700}
 .frame .camtag{position:absolute;top:72px;left:5px;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;color:#111;letter-spacing:.06em}
 .frame .mvtag{position:absolute;top:72px;right:5px;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;color:#fff;background:#000c;border:1px solid #fff5;letter-spacing:.04em}
+.frame .keytag{position:absolute;top:28px;left:5px;padding:1px 5px;border-radius:4px;font-size:9.5px;font-weight:700;letter-spacing:.06em;background:#5aa2ff;color:#06101f}
 .addFrame{flex:none;width:130px;height:150px;border:1.5px dashed var(--line2);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--mute);cursor:pointer;background:transparent}
 .addFrame:hover{border-color:var(--accent);color:var(--accent2)}
 .dirty{width:7px;height:7px;border-radius:50%;background:var(--accent);display:none}
@@ -380,9 +385,10 @@ details.blk>.bd{padding:2px 14px 14px}
       <label class="check"><input type="checkbox" id="sbDialogue" checked> Dialogue</label>
       <label class="check"><input type="checkbox" id="sbNotes"> Notes</label>
       <label class="check"><input type="checkbox" id="sbArrows" checked> Motion arrows on moving shots</label>
-      <label class="check"><input type="checkbox" id="sbEndInset" checked> End-frame inset on moving shots</label>
+      <label class="check"><input type="checkbox" id="sbEndInset" checked> Start / End inset on moving shots</label>
       <label class="check"><input type="checkbox" id="sbGrey"> Greyscale frames (sketch look)</label>
       <label class="check"><input type="checkbox" id="sbNewScene"> Start each scene on a new page</label>
+      <p class="hint">Each moving shot uses its chosen storyboard image (Start or End) as the main frame; the other end of the move goes in the corner inset.</p>
       <div class="foot"><button class="btn" data-close>Close</button><button class="btn primary" id="pdfGo">⤓ Download PDF</button></div>
     </div>
     <iframe id="sbPreview" title="Storyboard preview"></iframe>
@@ -847,7 +853,7 @@ function makeLabel(text, bg = 'rgba(10,12,16,.78)', fg = '#ffffff') {
    State
    ===================================================================== */
 const ents = new Map();
-let sel = null;
+let sel = null;                 // { id, joint, ik? }
 let interact = 'object';
 let tool = 'select';
 let viewMode = 'director';
@@ -913,7 +919,6 @@ function makeRig(c) {
   const fcam = new THREE.PerspectiveCamera();
   const helper = new THREE.CameraHelper(fcam);
   scene.add(helper);
-  // move path + end marker
   const path = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: c.color, transparent: true, opacity: 0.95, depthTest: false }));
   path.renderOrder = 15; path.visible = false; scene.add(path);
   const endMark = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), new THREE.MeshBasicMaterial({ color: c.color, wireframe: true, depthTest: false }));
@@ -1062,6 +1067,8 @@ function addCharacter(o = {}) {
   e.root.scale.setScalar(e.height / BASE_HEIGHT[gender]);
   e.root.visible = !e.hidden;
   scene.add(e.root); ents.set(e.id, e);
+  e.ik = ikNormalize(o.ik);
+  ikMakeHandles(e);
   if (o.pose) setPose(e, o.pose, false); else applyPreset(e, 'Stand');
   e.label.visible = env.showLabels;
   return e;
@@ -1087,6 +1094,7 @@ function setPose(e, pose, snap = true) {
 function applyPreset(e, name) {
   if (POSES[name]) setPose(e, POSES[name], true);
   else if (project.customPoses[name]) setPose(e, project.customPoses[name], false);
+  ikRebake(e);
 }
 function snapToFloor(e) {
   e.root.updateMatrixWorld(true);
@@ -1104,6 +1112,7 @@ function mirrorPose(e) {
     const r = p[src] || [0, 0, 0]; q[n] = [r[0], -r[1], -r[2]];
   }
   setPose(e, q, false);
+  ikRebake(e);
 }
 function addProp(o) {
   const def = PROPS[o.type]; if (!def) return null;
@@ -1123,13 +1132,14 @@ function applyLampLevel(e) { const lv = LIGHTING[env.light]?.lamps ?? 0; e.root.
 function removeEntity(id) {
   const e = ents.get(id); if (!e) return;
   if (sel?.id === id) select(null, null, true);
+  if (e.kind === 'character') ikDisposeHandles(e);
   scene.remove(e.root); disposeObj(e.root); ents.delete(id);
 }
 function setHidden(e, v) { e.hidden = v; e.root.visible = !v; if (v && sel?.id === e.id) select(null, null, true); }
 function serializeEnt(e) {
   const pos = e.root.position.toArray().map(v => r2(v, 4)), r = e.root.rotation;
   const rot = [r2(r.x * R2D, 3), r2(r.y * R2D, 3), r2(r.z * R2D, 3)];
-  if (e.kind === 'character') return { kind: 'character', id: e.id, name: e.name, gender: e.gender, color: e.color, height: e.height, pos, rot, hidden: e.hidden, pose: getPose(e) };
+  if (e.kind === 'character') return { kind: 'character', id: e.id, name: e.name, gender: e.gender, color: e.color, height: e.height, pos, rot, hidden: e.hidden, pose: getPose(e), ik: clone(e.ik) };
   return { kind: 'prop', id: e.id, type: e.type, name: e.name, color: e.color, color2: e.color2, pos, rot, hidden: e.hidden, scale: e.root.scale.toArray().map(v => r2(v, 4)) };
 }
 function duplicateSel() {
@@ -1199,7 +1209,7 @@ function restoreHist(str) {
   const keep = sel ? { ...sel } : null;
   deserialize(JSON.parse(str));
   hist.lock = false;
-  if (keep && (keep.id === '__camera' || ents.has(keep.id))) select(keep.id, keep.joint, true); else select(null, null, true);
+  if (keep && (keep.id === '__camera' || ents.has(keep.id))) select(keep.id, keep.joint, true, keep.ik || null); else select(null, null, true);
   refreshAllPanels(); markDirty(); scheduleSave(); updateUndoBtns();
 }
 function undo() { if (hist.idx > 0) { hist.idx--; restoreHist(hist.stack[hist.idx]); toast('Undo'); } }
@@ -1214,7 +1224,7 @@ function clearHighlight() { for (const x of highlighted) { x.mesh.material.dispo
 function setHighlightVisible(on) { for (const x of highlighted) x.mesh.material = on ? x.hl : x.orig; }
 function refreshHighlight() {
   clearHighlight();
-  if (!sel || sel.id === '__camera') return;
+  if (!sel || sel.id === '__camera' || sel.ik) return;
   const e = ents.get(sel.id); if (!e) return;
   const meshes = [];
   if (e.kind === 'character' && interact === 'pose') e.joints[sel.joint || 'hips'].children.forEach(m => m.isMesh && meshes.push(m));
@@ -1226,9 +1236,9 @@ function refreshHighlight() {
     highlighted.push({ mesh: m, orig: m.material, hl }); m.material = hl;
   }
 }
-function select(id, joint = null, silent = false) {
-  sel = id ? { id, joint } : null;
-  if (sel && sel.id !== '__camera') { const e = ents.get(id); if (e?.kind === 'character' && !sel.joint && interact === 'pose') sel.joint = 'hips'; }
+function select(id, joint = null, silent = false, ik = null) {
+  sel = id ? { id, joint, ik } : null;
+  if (sel && sel.id !== '__camera' && !sel.ik) { const e = ents.get(id); if (e?.kind === 'character' && !sel.joint && interact === 'pose') sel.joint = 'hips'; }
   attachGizmo(); refreshHighlight();
   renderObjPanel(); renderOutliner(); updateStatus();
   if (!silent) { if (id === '__camera') switchTab('R', 'cam'); else if (id) switchTab('R', 'obj'); }
@@ -1237,6 +1247,10 @@ function select(id, joint = null, silent = false) {
 function attachGizmo() {
   tc.detach(); tc.showX = tc.showY = tc.showZ = true;
   if (!sel || tool === 'select' || modal || walk) return;
+  if (sel.ik) {
+    const H = ikHandleOf(sel); if (!H) return;
+    tc.setMode('translate'); tc.setSpace('world'); tc.attach(H); return;
+  }
   if (sel.id === '__camera') {
     if (viewMode === 'camera' || !camGizmo) return;
     tc.setMode(tool === 'rotate' ? 'rotate' : 'translate'); tc.setSpace(tool === 'rotate' ? 'local' : 'world'); tc.attach(camGizmo); return;
@@ -1257,14 +1271,19 @@ function attachGizmo() {
 }
 function setTool(t) { tool = t; $$('#toolshelf [data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === t)); attachGizmo(); updateStatus(); }
 function setInteract(m) {
-  if (m === 'pose') { const e = sel && ents.get(sel.id); if (!e || e.kind !== 'character') { toast('Select a character to enter Pose Mode'); syncModeUI(); return; } if (!sel.joint) sel.joint = 'hips'; }
+  if (m === 'pose') { const e = sel && ents.get(sel.id); if (!e || e.kind !== 'character') { toast('Select a character to enter Pose Mode'); syncModeUI(); return; } sel.ik = null; if (!sel.joint) sel.joint = 'hips'; }
   interact = m; syncModeUI(); attachGizmo(); refreshHighlight(); renderObjPanel(); updateStatus();
 }
 function syncModeUI() { $('#modeSel').value = interact; }
-tc.addEventListener('dragging-changed', ev => { tcDragging = ev.value; if (ev.value && sel?.id === '__camera') { previewT = null; playing = null; } if (!ev.value) afterTransform(); });
+tc.addEventListener('dragging-changed', ev => {
+  tcDragging = ev.value;
+  if (ev.value && sel?.id === '__camera') { previewT = null; playing = null; }
+  if (!ev.value) { if (tc.object?.userData?.ikHandle) ikReadHandle(tc.object); afterTransform(); }
+});
 tc.addEventListener('objectChange', () => onObjMoved());
 function onObjMoved() {
   if (!sel) return;
+  if (sel.ik) { ikReadHandle(ikHandleOf(sel)); return; }
   if (sel.id === '__camera') {
     previewT = null; playing = null;
     cam.x = r2(camGizmo.position.x, 3); cam.y = r2(camGizmo.position.y, 3); cam.z = r2(camGizmo.position.z, 3);
@@ -1325,6 +1344,7 @@ function helpersVisible(on) {
     r.helper.visible = on && viewMode === 'director';
     r.path.visible = r.endMark.visible = on && viewMode === 'director' && r.hasPath;
   }
+  ikGroup.visible = on;
   tcObj.visible = on && !!tc.object;
 }
 function renderLoop(now) {
@@ -1332,6 +1352,7 @@ function renderLoop(now) {
   if (currentModule !== 'sb' || animaticBusy) return;
   walkTick(now);
   tickPlayback(now);
+  ikTickAll();
   if (viewMode === 'director') {
     const W = cv.clientWidth, H = cv.clientHeight;
     renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H);
@@ -1353,6 +1374,7 @@ function renderLoop(now) {
   drawNavGizmo();
 }
 function captureImage(longEdge = 1400) {
+  ikTickAll();
   const A = aspectOf(); let w, hh;
   if (A >= 1) { w = longEdge; hh = Math.round(longEdge / A); } else { hh = longEdge; w = Math.round(longEdge * A); }
   capRenderer.setSize(w, hh, false);
@@ -1379,10 +1401,179 @@ function updateHUD(P = cam) {
     `<span class="m">Sensor</span> ${C.sensor === 'custom' ? `Custom ${C.sw}×${C.sh}` : s.name.replace(/ \(.+\)/, '')} · <span class="m">Aspect</span> ${aspectLabel(C.aspect)}<br>` +
     `<span class="m">HFOV</span> ${r2(L.hfov, 1)}° · <span class="m">VFOV</span> ${r2(L.vfov, 1)}° · <span class="m">FF-equiv</span> ${r2(L.eq, 0)}mm<br>` +
     `<span class="m">DOF</span> ${fmtM(L.near)} – ${fmtM(L.far)} · <span class="m">Height</span> ${r2(C.y, 2)} m · <span class="m">Tilt</span> ${r2(C.pitch, 1)}° · <span class="m">Dutch</span> ${r2(C.roll, 1)}°` +
-    (cam.move ? `<br><span class="m">Move</span> <b>${cam.move.type}</b> · ${r2(cam.move.duration, 1)}s${previewT != null ? ` · <span class="m">t</span> ${r2(previewT * cam.move.duration, 1)}s` : ''}` : '');
+    (cam.move ? `<br><span class="m">Move</span> <b>${cam.move.type}</b> · ${r2(cam.move.duration, 1)}s · board: ${(cam.move.board || 'start').toUpperCase()}${previewT != null ? ` · <span class="m">t</span> ${r2(previewT * cam.move.duration, 1)}s` : ''}` : '');
   const tag = $('#viewTag');
   if (viewMode === 'camera') { tag.className = 'cam'; tag.style.color = cam.color; tag.textContent = `● ${cam.name.toUpperCase()} · ${r2(C.focal, 0)}mm${lockCam ? ' · LOCKED TO VIEW' : ''}${playing ? ' · ▶' : ''}`; }
   else { tag.className = ''; tag.style.color = ''; tag.textContent = `${dir.ortho ? 'USER ORTHO' : 'USER PERSPECTIVE'}${dir.viewName ? ' · ' + dir.viewName.toUpperCase() : ''}`; }
+}
+
+/* =====================================================================
+   INVERSE KINEMATICS  (two-bone IK for arms & legs, pole targets, head look-at)
+   ===================================================================== */
+const IK_LIMBS = {
+  arm_L: { up: 'shoulder_L', mid: 'elbow_L', end: 'wrist_L', leg: false, label: 'L Arm', endLabel: 'L Hand', midLabel: 'L Elbow' },
+  arm_R: { up: 'shoulder_R', mid: 'elbow_R', end: 'wrist_R', leg: false, label: 'R Arm', endLabel: 'R Hand', midLabel: 'R Elbow' },
+  leg_L: { up: 'hip_L', mid: 'knee_L', end: 'ankle_L', leg: true, label: 'L Leg', endLabel: 'L Foot', midLabel: 'L Knee' },
+  leg_R: { up: 'hip_R', mid: 'knee_R', end: 'ankle_R', leg: true, label: 'R Leg', endLabel: 'R Foot', midLabel: 'R Knee' },
+};
+const ikGroup = new THREE.Group(); ikGroup.name = 'ik-handles'; scene.add(ikGroup);
+const V3 = () => new THREE.Vector3(), QT = () => new THREE.Quaternion();
+function ikNormalize(o) {
+  const d = { limbs: { arm_L: false, arm_R: false, leg_L: false, leg_R: false }, t: {}, look: 'none' };
+  if (!o) return d;
+  return { limbs: { ...d.limbs, ...(o.limbs || {}) }, t: clone(o.t || {}), look: o.look || 'none' };
+}
+const ikOnAny = e => e?.kind === 'character' && e.ik && Object.values(e.ik.limbs).some(Boolean);
+const ikActive = e => e?.kind === 'character' && e.ik && (ikOnAny(e) || e.ik.look !== 'none');
+function ikMakeHandles(e) {
+  e.ikH = {};
+  for (const k of Object.keys(IK_LIMBS)) {
+    const col = k.endsWith('_L') ? 0x4fa3ff : 0xff5a4f;
+    const t = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 12), new THREE.MeshBasicMaterial({ color: col, depthTest: false, transparent: true, opacity: 0.85 }));
+    const p = new THREE.Mesh(new THREE.OctahedronGeometry(0.045), new THREE.MeshBasicMaterial({ color: col, wireframe: true, depthTest: false }));
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0], 3));
+    const line = new THREE.Line(lg, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.55, depthTest: false }));
+    t.userData.ikHandle = { id: e.id, limb: k, part: 't' }; p.userData.ikHandle = { id: e.id, limb: k, part: 'p' };
+    for (const m of [t, p, line]) { m.renderOrder = 30; m.visible = false; ikGroup.add(m); }
+    e.ikH[k] = { t, p, line };
+  }
+}
+function ikDisposeHandles(e) {
+  if (!e.ikH) return;
+  for (const H of Object.values(e.ikH)) for (const m of [H.t, H.p, H.line]) { ikGroup.remove(m); disposeObj(m); }
+  e.ikH = null;
+}
+function ikHandleOf(s) { if (!s?.ik) return null; const e = ents.get(s.id); return e?.ikH?.[s.ik.limb]?.[s.ik.part] || null; }
+const toLocalArr = (e, w) => e.root.worldToLocal(w.clone()).toArray().map(v => r2(v, 4));
+/* Create target + pole from the current (FK) pose */
+function ikInitLimb(e, k) {
+  const L = IK_LIMBS[k]; e.root.updateMatrixWorld(true);
+  const upW = e.joints[L.up].getWorldPosition(V3()), midW = e.joints[L.mid].getWorldPosition(V3()), endW = e.joints[L.end].getWorldPosition(V3());
+  const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(e.root.getWorldQuaternion(QT()));
+  const line = endW.clone().sub(upW), toMid = midW.clone().sub(upW);
+  let perp = toMid.clone().sub(line.clone().multiplyScalar(toMid.dot(line) / Math.max(1e-6, line.lengthSq())));
+  if (perp.length() < 0.015) perp = fwd.clone().multiplyScalar(L.leg ? 1 : -1);
+  perp.normalize();
+  const s = e.root.scale.y || 1;
+  e.ik.t[k] = { t: toLocalArr(e, endW), p: toLocalArr(e, midW.clone().addScaledVector(perp, 0.45 * s)) };
+}
+function ikRebake(e) { if (!e?.ik) return; for (const k of Object.keys(IK_LIMBS)) if (e.ik.limbs[k]) ikInitLimb(e, k); }
+function ikSetLimb(e, k, on) {
+  if (on) ikInitLimb(e, k);
+  e.ik.limbs[k] = on;
+}
+/* Analytic two-bone solve. Bones point down local −Y; the bend plane is local YZ.
+   Legs bend with +X (knee forward), arms with −X (elbow back). */
+function ikSolveLimb(e, k) {
+  const L = IK_LIMBS[k], d = e.ik.t[k]; if (!d) return;
+  const up = e.joints[L.up], mid = e.joints[L.mid], end = e.joints[L.end];
+  e.root.updateMatrixWorld(true);
+  const A = up.getWorldPosition(V3()), Kc = mid.getWorldPosition(V3()), Ec = end.getWorldPosition(V3());
+  const l1 = A.distanceTo(Kc), l2 = Kc.distanceTo(Ec);
+  if (l1 < 1e-5 || l2 < 1e-5) return;
+  const footWQ = L.leg ? end.getWorldQuaternion(QT()) : null;
+  const T = e.root.localToWorld(new THREE.Vector3().fromArray(d.t));
+  const P = e.root.localToWorld(new THREE.Vector3().fromArray(d.p));
+  const AT = T.clone().sub(A); let dist = AT.length();
+  const n = dist > 1e-6 ? AT.divideScalar(dist) : new THREE.Vector3(0, -1, 0);
+  const dd = clamp(dist, Math.abs(l1 - l2) + 1e-4, l1 + l2 - 1e-4);
+  let perp = P.clone().sub(A); perp.sub(n.clone().multiplyScalar(perp.dot(n)));
+  if (perp.lengthSq() < 1e-8) { perp = new THREE.Vector3(0, 0, L.leg ? 1 : -1).applyQuaternion(e.root.getWorldQuaternion(QT())); perp.sub(n.clone().multiplyScalar(perp.dot(n))); }
+  perp.normalize();
+  const a = (l1 * l1 - l2 * l2 + dd * dd) / (2 * dd), hgt = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+  const K = A.clone().addScaledVector(n, a).addScaledVector(perp, hgt);
+  const Tr = A.clone().addScaledVector(n, dd);
+  const sgn = L.leg ? 1 : -1;
+  const basis = (bone) => {
+    const y = bone.clone().negate().normalize();
+    const z = perp.clone().multiplyScalar(sgn); z.sub(y.clone().multiplyScalar(z.dot(y)));
+    if (z.lengthSq() < 1e-8) z.set(0, 0, 1); z.normalize();
+    const x = new THREE.Vector3().crossVectors(y, z).normalize(); z.crossVectors(x, y).normalize();
+    return QT().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+  };
+  const qUp = basis(K.clone().sub(A));
+  const parentQ = up.parent.getWorldQuaternion(QT());
+  up.quaternion.copy(parentQ.invert().multiply(qUp));
+  const qMid = basis(Tr.clone().sub(K));
+  mid.quaternion.copy(qUp.clone().invert().multiply(qMid));
+  if (footWQ) end.quaternion.copy(qMid.clone().invert().multiply(footWQ));
+  up.updateMatrixWorld(true);
+}
+function ikLookTarget(e) {
+  const lk = e.ik?.look; if (!lk || lk === 'none') return null;
+  if (lk === 'camera') { if (!cam) return null; const P = (cam.move && previewT != null) ? camPose(cam, previewT, null) : cam; return new THREE.Vector3(P.x, P.y, P.z); }
+  const o = ents.get(lk); if (!o || o.kind !== 'character' || o === e) return null;
+  return o.joints.head.getWorldPosition(V3()).add(new THREE.Vector3(0, 0.1 * o.root.scale.y, 0));
+}
+function ikLook(e) {
+  const T = ikLookTarget(e); if (!T) return;
+  const head = e.joints.head, neck = e.joints.neck;
+  neck.quaternion.identity(); head.quaternion.identity(); e.root.updateMatrixWorld(true);
+  const H = head.getWorldPosition(V3()).add(new THREE.Vector3(0, 0.1 * e.root.scale.y, 0));
+  const dl = T.clone().sub(H).normalize().applyQuaternion(neck.getWorldQuaternion(QT()).invert());
+  const yaw = clamp(Math.atan2(dl.x, dl.z), -80 * D2R, 80 * D2R), pitch = clamp(-Math.asin(clamp(dl.y, -1, 1)), -45 * D2R, 55 * D2R);
+  const q = (y, p) => QT().setFromAxisAngle(new THREE.Vector3(0, 1, 0), y).multiply(QT().setFromAxisAngle(new THREE.Vector3(1, 0, 0), p));
+  neck.quaternion.copy(q(yaw * 0.4, pitch * 0.35)); head.quaternion.copy(q(yaw * 0.6, pitch * 0.65));
+}
+const ikDragged = m => !!m && ((modal && modal.obj === m) || (tcDragging && tc.object === m));
+function ikReadHandle(m) {
+  if (!m?.userData?.ikHandle) return;
+  const { id, limb, part } = m.userData.ikHandle; const e = ents.get(id); if (!e?.ik?.t[limb]) return;
+  e.ik.t[limb][part] = toLocalArr(e, m.position);
+  ikUpdate(e);
+}
+function ikUpdate(e) {
+  if (e.kind !== 'character' || !e.ik || !e.ikH) return;
+  const showH = !e.hidden && sel?.id === e.id && !animaticBusy;
+  for (const k of Object.keys(IK_LIMBS)) {
+    const H = e.ikH[k], on = e.ik.limbs[k];
+    if (on) {
+      if (!e.ik.t[k]) ikInitLimb(e, k);
+      const d = e.ik.t[k];
+      for (const part of ['t', 'p']) {
+        const m = H[part];
+        if (ikDragged(m)) d[part] = toLocalArr(e, m.position);
+        else m.position.copy(e.root.localToWorld(new THREE.Vector3().fromArray(d[part])));
+      }
+      ikSolveLimb(e, k);
+      const mw = e.joints[IK_LIMBS[k].mid].getWorldPosition(V3()), a = H.line.geometry.attributes.position;
+      a.setXYZ(0, mw.x, mw.y, mw.z); a.setXYZ(1, H.p.position.x, H.p.position.y, H.p.position.z); a.needsUpdate = true;
+      H.line.geometry.computeBoundingSphere();
+    }
+    const vis = on && showH;
+    H.t.visible = H.p.visible = H.line.visible = vis;
+    const isSel = sel?.ik && sel.id === e.id && sel.ik.limb === k;
+    H.t.scale.setScalar(isSel && sel.ik.part === 't' ? 1.5 : 1);
+    H.p.scale.setScalar(isSel && sel.ik.part === 'p' ? 1.7 : 1);
+  }
+  ikLook(e);
+  updateLabel(e);
+}
+function ikTickAll() {
+  for (const e of ents.values()) {
+    if (e.kind !== 'character' || !e.ikH) continue;
+    if (ikActive(e)) ikUpdate(e);
+    else for (const H of Object.values(e.ikH)) H.t.visible = H.p.visible = H.line.visible = false;
+  }
+}
+/* Joints currently driven by IK (FK edits on them are overridden) */
+function ikDriven(e, jn) {
+  if (!e?.ik) return false;
+  if ((jn === 'head' || jn === 'neck') && e.ik.look !== 'none') return true;
+  for (const [k, L] of Object.entries(IK_LIMBS)) if (e.ik.limbs[k] && (L.up === jn || L.mid === jn)) return true;
+  return false;
+}
+function ikHandlePick(cx, cy) {
+  const list = []; for (const m of ikGroup.children) if (m.visible && m.isMesh) list.push(m);
+  if (!list.length) return null;
+  setNdc(cx, cy); ray.setFromCamera(ndc, activeRenderCam());
+  return ray.intersectObjects(list, false)[0] || null;
+}
+function ikResetLimb(e, k) {
+  const L = IK_LIMBS[k];
+  for (const n of [L.up, L.mid, L.end]) e.joints[n].rotation.set(0, 0, 0);
+  const st = POSES.Stand[L.up]; if (st) e.joints[L.up].rotation.set(st[0] * D2R, st[1] * D2R, st[2] * D2R);
+  ikInitLimb(e, k); ikUpdate(e);
 }
 
 /* =====================================================================
@@ -1462,6 +1653,7 @@ function frameBox(box) {
 function frameSelected() {
   if (!sel) return toast('Nothing selected');
   if (sel.id === '__camera') return frameBox(boundsOf(['__camera']).expandByScalar(0.6));
+  if (sel.ik) { const H = ikHandleOf(sel); if (H) return frameBox(new THREE.Box3().setFromCenterAndSize(H.position.clone(), new THREE.Vector3(0.8, 0.8, 0.8))); }
   const e = ents.get(sel.id);
   if (e.kind === 'character' && interact === 'pose') { const b = new THREE.Box3(); e.joints[sel.joint || 'hips'].children.forEach(m => m.isMesh && b.expandByObject(m)); return frameBox(b.expandByScalar(0.15)); }
   frameBox(boundsOf([e]));
@@ -1565,6 +1757,8 @@ window.addEventListener('pointerup', ev => {
   else if (d.button === 2) showContextMenu(ev.clientX, ev.clientY);
 });
 function clickSelect(ev) {
+  const hh = ikHandlePick(ev.clientX, ev.clientY);
+  if (hh) { const u = hh.object.userData.ikHandle; return select(u.id, null, false, { limb: u.limb, part: u.part }); }
   const hit = pickAt(ev.clientX, ev.clientY);
   if (!hit) { if (!ev.shiftKey) select(null); return; }
   const id = hit.object.userData.entity;
@@ -1583,6 +1777,7 @@ function clickSelect(ev) {
 }
 cv.addEventListener('dblclick', ev => {
   if (modal || walk) return;
+  if (ikHandlePick(ev.clientX, ev.clientY)) return;
   const hit = pickAt(ev.clientX, ev.clientY); if (!hit) return;
   if (hit.object.userData.entity === '__camera') { setView('camera'); return; }
   const e = ents.get(hit.object.userData.entity);
@@ -1655,12 +1850,18 @@ let modal = null;
 const AX_IDX = { x: 0, y: 1, z: 2 };
 function modalTarget(type) {
   if (!sel) return null;
+  if (sel.ik) {
+    if (type !== 'G') { toast('IK handles are moved with G (or the Move tool)'); return null; }
+    const H = ikHandleOf(sel); if (!H) return null;
+    return { obj: H, kind: 'ik', ent: ents.get(sel.id) };
+  }
   if (sel.id === '__camera') { if (type === 'S') return null; return { obj: camGizmo, kind: 'camera' }; }
   const e = ents.get(sel.id); if (!e) return null;
   if (e.kind === 'character' && interact === 'pose') {
     const jn = sel.joint || 'hips';
     if (type === 'S') { toast('Scale is not available for joints'); return null; }
     if (type === 'G' && jn !== 'hips') { toast('Only the hips can be moved in Pose Mode – press R to rotate joints'); return null; }
+    if (type === 'R' && ikDriven(e, jn)) { toast(`${JOINT_LABEL[jn]} is driven by IK – move the hand/foot handle, or turn IK off for that limb`); return null; }
     return { obj: e.joints[jn], kind: 'joint', ent: e };
   }
   return { obj: e.root, kind: e.kind, ent: e };
@@ -1691,6 +1892,7 @@ function axisVector() {
   if (!modal.axis) return null;
   if (modal.space === 'local') {
     if (modal.kind === 'joint') return new THREE.Vector3(...[[1, 0, 0], [0, 1, 0], [0, 0, 1]][AX_IDX[modal.axis]]).applyQuaternion(modal.wq0).normalize();
+    if (modal.kind === 'ik' && modal.ent) return BAXIS[modal.axis].clone().applyQuaternion(modal.ent.root.getWorldQuaternion(new THREE.Quaternion())).normalize();
     return BAXIS[modal.axis].clone().applyQuaternion(modal.wq0).normalize();
   }
   return BAXIS[modal.axis].clone();
@@ -1756,7 +1958,9 @@ function updateModal() {
     info = `Scale: ${r2(f, 3)}`;
   }
   o.updateMatrixWorld(true);
-  if (m.kind === 'camera') onObjMoved(); else if (m.ent?.kind === 'character') { if (m.kind === 'character') m.ent.height = Math.round(BASE_HEIGHT[m.ent.gender] * o.scale.x); updateLabel(m.ent); }
+  if (m.kind === 'camera') onObjMoved();
+  else if (m.kind === 'ik') ikReadHandle(o);
+  else if (m.ent?.kind === 'character') { if (m.kind === 'character') m.ent.height = Math.round(BASE_HEIGHT[m.ent.gender] * o.scale.x); updateLabel(m.ent); }
   if (ax) {
     axisLine.visible = true; axisLine.position.copy(m.pivot);
     axisLine.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), ax.clone().normalize());
@@ -1765,12 +1969,13 @@ function updateModal() {
   m.info = info + (m.num ? `   [${m.num}]` : '') + (m.axis ? `   along ${m.plane ? 'plane ⟂ ' : ''}${m.space === 'local' ? 'local ' : 'global '}${m.axis.toUpperCase()}` : '');
   updateStatus();
 }
-function confirmModal() { if (!modal) return; modal = null; axisLine.visible = false; afterTransform(); attachGizmo(); updateStatus(); refreshObjValues(); }
+function confirmModal() { if (!modal) return; const m = modal; modal = null; axisLine.visible = false; if (m.kind === 'ik') ikReadHandle(m.obj); afterTransform(); attachGizmo(); updateStatus(); refreshObjValues(); }
 function cancelModal() {
   if (!modal) return; const m = modal; modal = null; axisLine.visible = false;
   m.obj.position.copy(m.p0); m.obj.quaternion.copy(m.q0); m.obj.scale.copy(m.s0); m.obj.updateMatrixWorld(true);
   if (m.kind === 'camera') onObjMoved();
-  if (m.ent?.kind === 'character') { m.ent.height = Math.round(BASE_HEIGHT[m.ent.gender] * m.ent.root.scale.x); updateLabel(m.ent); }
+  if (m.kind === 'ik') ikReadHandle(m.obj);
+  else if (m.ent?.kind === 'character') { m.ent.height = Math.round(BASE_HEIGHT[m.ent.gender] * m.ent.root.scale.x); updateLabel(m.ent); }
   attachGizmo(); updateStatus(); refreshObjValues();
 }
 function modalKey(ev) {
@@ -1886,10 +2091,21 @@ function showContextMenu(x, y) {
     { label: 'Capture Frame', key: 'I', fn: captureFrame },
     { label: 'Capture All Cameras', key: 'Ctrl I', fn: captureAllCams },
   ]);
+  if (sel.ik) {
+    const e = ents.get(sel.id), L = IK_LIMBS[sel.ik.limb];
+    return showMenu(x, y, `${e.name} · ${sel.ik.part === 't' ? L.endLabel : L.midLabel} IK`, [
+      { label: 'Move Handle', key: 'G', fn: () => startModal('G') },
+      { label: 'Snap Handles to Pose', fn: () => { ikInitLimb(e, sel.ik.limb); commit(); } },
+      { label: 'Reset Limb', key: 'Alt G', fn: () => { ikResetLimb(e, sel.ik.limb); commit(); } },
+      { label: `Turn Off IK (${L.label})`, fn: () => { ikSetLimb(e, sel.ik.limb, false); select(e.id, null, true); commit(); } },
+      { label: 'Select Character', fn: () => select(e.id) },
+    ]);
+  }
   if (sel.id === '__camera') return showMenu(x, y, cam.name, [
     { label: 'Move', key: 'G', fn: () => startModal('G') }, { label: 'Rotate', key: 'R', fn: () => startModal('R') },
     { label: 'Look Through', key: 'Num 0', fn: () => setView('camera') }, { label: 'Align to View', key: 'Ctrl Alt Num 0', fn: alignCamToView }, '-',
     { label: 'Camera Move', sub: Object.keys(MOVE_DEFS).map(k => ({ label: k, fn: () => { setCamMove(cam, k); renderCamPanel(); renderShotPanel(); commit(); } })) },
+    { label: 'Storyboard Image', sub: [{ label: 'Start of move', fn: () => setBoardKey('start') }, { label: 'End of move', fn: () => setBoardKey('end') }] },
     { label: 'Frame Shot', sub: SHOT_SIZES.map(l => ({ label: l, fn: () => applyFraming(l) })) },
     { label: 'Play Move', key: 'Space', fn: togglePlay }, '-',
     { label: 'Duplicate Camera', key: 'Shift D', fn: () => { if (duplicateSel()) startModal('G'); } },
@@ -1908,9 +2124,10 @@ function showContextMenu(x, y) {
   ];
   if (isC) items.push('-',
     { label: interact === 'pose' ? 'Object Mode' : 'Pose Mode', key: 'Tab', fn: () => setInteract(interact === 'pose' ? 'object' : 'pose') },
+    { label: ikOnAny(e) ? 'IK: Turn Off (keep pose)' : 'IK: Turn On (all limbs)', fn: () => { const on = !ikOnAny(e); for (const k of Object.keys(IK_LIMBS)) ikSetLimb(e, k, on); renderObjPanel(); commit(); toast(on ? 'IK on – drag the coloured hand/foot handles' : 'IK off – pose kept'); } },
     { label: 'Pose Presets', sub: Object.keys(POSES).map(n => ({ label: n, fn: () => { applyPreset(e, n); commit(); refreshObjValues(); } })) },
     { label: 'Mirror Pose', fn: () => { mirrorPose(e); commit(); refreshObjValues(); } },
-    { label: 'Snap Feet to Floor', fn: () => { snapToFloor(e); commit(); } });
+    { label: 'Snap Feet to Floor', fn: () => { snapToFloor(e); ikRebake(e); commit(); } });
   showMenu(x, y, e.name, items);
 }
 
@@ -1922,6 +2139,7 @@ function isTyping(t) { return t && (['INPUT', 'TEXTAREA', 'SELECT'].includes(t.t
 function clearTransform(kind) {
   if (!sel || sel.id === '__camera') return;
   const e = ents.get(sel.id);
+  if (sel.ik) { if (kind === 'G') { ikResetLimb(e, sel.ik.limb); commit(); toast('IK limb reset'); } return; }
   if (e.kind === 'character' && interact === 'pose') {
     const j = e.joints[sel.joint || 'hips'];
     if (kind === 'R') j.rotation.set(0, 0, 0); else if (kind === 'G' && sel.joint === 'hips') { j.position.copy(e.hipsDefault); snapToFloor(e); }
@@ -1949,7 +2167,6 @@ function sbKeydown(ev) {
   if (mod && k === 'z') { ev.preventDefault(); ev.shiftKey ? redo() : undo(); return; }
   if (mod && k === 'y') { ev.preventDefault(); redo(); return; }
   if (mod && k === 'i') { ev.preventDefault(); captureAllCams(); return; }
-  // Playback (Blender timeline keys)
   if (ev.code === 'Space' && !mod && !ev.altKey) { ev.preventDefault(); if (ev.target.blur) ev.target.blur?.(); togglePlay(); return; }
   if (!mod && !ev.altKey && (ev.code === 'ArrowLeft' || ev.code === 'ArrowRight') && cam.move) {
     ev.preventDefault();
@@ -1992,16 +2209,17 @@ function sbKeydown(ev) {
   switch (k) {
     case 'g': case 'r': case 's': ev.preventDefault(); startModal(k.toUpperCase()); break;
     case 'a': if (ev.shiftKey) { ev.preventDefault(); showAddMenu(mouse.x, mouse.y); } break;
-    case 'd': if (ev.shiftKey) { ev.preventDefault(); if (duplicateSel()) startModal('G'); } break;
+    case 'd': if (ev.shiftKey) { ev.preventDefault(); if (sel?.ik) return; if (duplicateSel()) startModal('G'); } break;
     case 'x': case 'delete':
-      if (sel?.id === '__camera') { ev.preventDefault(); const n = cam.name; if (removeCamera(cam.id)) { select(null); commit(); renderOutliner(); toast(`Deleted ${n}`); } }
+      if (sel?.ik) { ev.preventDefault(); const e = ents.get(sel.id); ikSetLimb(e, sel.ik.limb, false); select(e.id, null, true); commit(); toast('IK turned off for that limb (pose kept)'); }
+      else if (sel?.id === '__camera') { ev.preventDefault(); const n = cam.name; if (removeCamera(cam.id)) { select(null); commit(); renderOutliner(); toast(`Deleted ${n}`); } }
       else if (sel) { ev.preventDefault(); const n = ents.get(sel.id).name; removeEntity(sel.id); commit(); renderOutliner(); toast(`Deleted ${n}`); }
       break;
-    case 'h': if (sel && sel.id !== '__camera') { setHidden(ents.get(sel.id), true); commit(); renderOutliner(); } break;
+    case 'h': if (sel && sel.id !== '__camera' && !sel.ik) { setHidden(ents.get(sel.id), true); commit(); renderOutliner(); } break;
     case 'i': ev.preventDefault(); ev.shiftKey ? updateFrame() : captureFrame(); break;
     case 'n': ev.preventDefault(); togglePanel('right'); break;
     case 't': ev.preventDefault(); togglePanel('left'); break;
-    case 'escape': if (playing || previewT != null) clearPreview(); else select(null); break;
+    case 'escape': if (playing || previewT != null) clearPreview(); else if (sel?.ik) select(sel.id); else select(null); break;
     case 'f1': ev.preventDefault(); openKeys(); break;
     case 'w': if (!ev.shiftKey) { ev.preventDefault(); const order = ['select', 'translate', 'rotate', 'scale']; setTool(order[(order.indexOf(tool) + 1) % 4]); } break;
   }
@@ -2028,18 +2246,22 @@ function updateStatus() {
   if (currentModule !== 'sb') { hs.innerHTML = 'Call Sheets · edit on the left, live A4 preview on the right'; md.textContent = ''; inf.textContent = ''; return; }
   if (modal) {
     hs.innerHTML = `${K('LMB')}${K('Enter')} Confirm  ${K('RMB')}${K('Esc')} Cancel  ${K('X')}${K('Y')}${K('Z')} Axis  ${K('Shift')}+axis Plane  ${K('Ctrl')} Snap  ${K('0-9')} Value`;
-    md.textContent = `${{ G: 'Move', R: 'Rotate', S: 'Resize' }[modal.type]} · ${modal.info || ''}`;
+    md.textContent = `${{ G: 'Move', R: 'Rotate', S: 'Resize' }[modal.type]}${modal.kind === 'ik' ? ' IK handle' : ''} · ${modal.info || ''}`;
   } else if (walk) {
     hs.innerHTML = `${K('W')}${K('A')}${K('S')}${K('D')} Move  ${K('Q')}${K('E')} Down/Up  ${K('Shift')} Fast  ${K('Alt')} Slow  ${K('Wheel')} Speed  ${K('LMB')} Confirm  ${K('RMB')}${K('Esc')} Cancel`;
     md.textContent = `Walk · speed ${r2(walk.speed, 2)} m/s`;
   } else if (nav) {
     hs.innerHTML = nav.kind === 'orbit' ? 'Orbit View' : nav.kind === 'pan' ? 'Pan View' : 'Zoom View'; md.textContent = '';
+  } else if (sel?.ik) {
+    hs.innerHTML = `${K('G')} Move IK handle  ${K('X')}${K('Y')}${K('Z')} Constrain  ${K('Alt G')} Reset limb  ${K('X')} after select: IK off  ${K('Esc')} Back to character`;
+    md.textContent = '';
   } else {
     hs.innerHTML = `${K('MMB')} Orbit  ${K('Shift')}+${K('MMB')} Pan  ${K('Wheel')} Zoom  ${env.emu3 ? K('Alt') + '+' + K('LMB') + ' Orbit  ' : ''}${K('G')}${K('R')}${K('S')} Transform  ${K('Shift A')} Add  ${K('Num 0')} Camera  ${K('Space')} Play move  ${K('I')} Capture  ${K('F1')} All keys`;
     md.textContent = '';
   }
   const e = sel && sel.id !== '__camera' ? ents.get(sel.id) : null;
-  inf.innerHTML = `${interact === 'pose' ? '<b>Pose Mode</b>' : 'Object Mode'} · ${sel ? (sel.id === '__camera' ? cam.name : (e?.name || '') + (interact === 'pose' && sel.joint ? ' › ' + JOINT_LABEL[sel.joint] : '')) : 'Nothing selected'} · Active <b style="color:${cam?.color}">${cam?.name || ''}</b> · Cams ${cams.length} · Objects ${ents.size} · Frames ${project.frames.length}`;
+  const ikTxt = sel?.ik ? ` › IK ${sel.ik.part === 't' ? IK_LIMBS[sel.ik.limb].endLabel : IK_LIMBS[sel.ik.limb].midLabel + ' pole'}` : '';
+  inf.innerHTML = `${interact === 'pose' ? '<b>Pose Mode</b>' : 'Object Mode'} · ${sel ? (sel.id === '__camera' ? cam.name : (e?.name || '') + ikTxt + (!sel.ik && interact === 'pose' && sel.joint ? ' › ' + JOINT_LABEL[sel.joint] : '')) : 'Nothing selected'} · Active <b style="color:${cam?.color}">${cam?.name || ''}</b> · Cams ${cams.length} · Objects ${ents.size} · Frames ${project.frames.length}`;
 }
 const KEYS_HELP = [
   ['View navigation'],
@@ -2054,6 +2276,7 @@ const KEYS_HELP = [
   ['Double-click camera', 'Look through it'], ['🔒 Lock Cam', 'Navigating in camera view moves the active camera'],
   ['Shots & camera moves'],
   ['Cameras → Frame Shot', 'ECU … EWS, Two Shot, OTS, POV, Insert, Establishing'], ['Cameras → Camera Move', 'Pan, tilt, dolly, truck, zoom, crane, arc, whip, rack, vertigo…'],
+  ['Storyboard image', 'Start / End – which end of the move is the main board frame'],
   ['Space', 'Play / pause the active camera move'], ['Shift + ← / →', 'Jump to move start / end'], ['← / →', 'Step through the move'], ['Esc', 'Stop & exit move preview'],
   ['◆ Key Start / Key End', 'Hand-key a custom move from two camera positions'],
   ['Objects'],
@@ -2061,9 +2284,12 @@ const KEYS_HELP = [
   ['Alt + G / R / S', 'Clear location / rotation / scale'], ['Shift + D', 'Duplicate & move (works on cameras too)'], ['X / Delete', 'Delete'], ['H / Alt + H', 'Hide / reveal all'],
   ['Shift + A', 'Add menu (tableware lands on the surface under the mouse)'], ['RMB', 'Context menu'], ['W', 'Cycle tool gizmo'],
   ['Posing'],
-  ['Tab', 'Object / Pose mode'], ['Double-click limb', 'Pose that joint'], ['R (Pose)', 'Rotate joint (X Y Z twice = local axis)'], ['G (Pose, hips)', 'Move hips'], ['Alt + R (Pose)', 'Clear joint rotation'],
+  ['Tab', 'Object / Pose mode'], ['Double-click limb', 'Pose that joint'], ['R (Pose)', 'Rotate joint (X Y Z twice = local axis)'], ['G (Pose, hips)', 'Move hips – IK feet stay planted'], ['Alt + R (Pose)', 'Clear joint rotation'],
+  ['Inverse kinematics'],
+  ['Object → IK', 'Turn IK on per arm / leg, or right-click → IK: Turn On'], ['Click sphere', 'Select a hand / foot IK target'], ['Click diamond', 'Select elbow / knee pole (bend direction)'],
+  ['G (handle)', 'Move the target – the limb follows'], ['Alt + G (handle)', 'Reset that limb'], ['X (handle)', 'Turn IK off for that limb (pose kept)'], ['Head look-at', 'Point the head at the camera or another character'],
   ['Storyboard & UI'],
-  ['I / Shift + I', 'Capture frame / Update selected frame'], ['Ctrl + I', 'Capture one frame per camera'], ['🎞 Animatic', 'Play / record the whole board as video'], ['N / T', 'Toggle side panels'], ['Ctrl + Z / Ctrl + Shift + Z', 'Undo / Redo'], ['Ctrl + S', 'Save project file'],
+  ['I / Shift + I', 'Capture frame / Update selected frame'], ['Ctrl + I', 'Capture one frame per camera'], ['⇆ on a frame', 'Swap Start / End storyboard image'], ['🎞 Animatic', 'Play / record the whole board as video'], ['N / T', 'Toggle side panels'], ['Ctrl + Z / Ctrl + Shift + Z', 'Undo / Redo'], ['Ctrl + S', 'Save project file'],
   ['', 'No numpad? The number row works as the numpad.'],
 ];
 function openKeys() {
@@ -2106,6 +2332,7 @@ function select_(opts, value, onChange, attrs = {}) {
 const input = (value, onInput, attrs = {}) => { const i = h('input', { class: 'ctl', ...attrs }); i.value = value ?? ''; i.addEventListener('input', () => onInput(i.value)); return i; };
 const color = (value, onInput, onChange) => { const i = h('input', { type: 'color', class: 'ctl', value }); i.addEventListener('input', () => onInput(i.value)); i.addEventListener('change', () => onChange && onChange(i.value)); return i; };
 const check = (label, value, onChange) => { const i = h('input', { type: 'checkbox' }); i.checked = !!value; i.addEventListener('change', () => onChange(i.checked)); return h('label', { class: 'check' }, i, label); };
+const seg = (opts, value, onPick) => h('div', { class: 'seg' }, opts.map(([v, l]) => h('button', { class: v === value ? 'on' : '', onclick: () => onPick(v) }, l)));
 
 /* =====================================================================
    Left panels
@@ -2170,7 +2397,7 @@ function renderOutliner() {
     h('button', { class: 'btn xs ghost danger', title: 'Delete camera', onclick: ev => { ev.stopPropagation(); if (removeCamera(c.id)) { if (sel?.id === '__camera') select(null, null, true); commit(); renderOutliner(); renderCamPanel(); } } }, '✕'));
   const chars = [...ents.values()].filter(e => e.kind === 'character'), props = [...ents.values()].filter(e => e.kind === 'prop');
   p.append(sec(['Cameras', h('button', { class: 'btn xs', onclick: addCameraFromView }, '＋ Add')], cams.map(camItem)));
-  p.append(sec(['Characters', h('span', { class: 'ty' }, chars.length)], chars.length ? chars.map(e => item(e.id, e.color, e.name, `${e.gender === 'male' ? '♂' : '♀'} ${e.height}cm`, e)) : h('div', { class: 'empty' }, 'No characters yet.')));
+  p.append(sec(['Characters', h('span', { class: 'ty' }, chars.length)], chars.length ? chars.map(e => item(e.id, e.color, e.name, `${e.gender === 'male' ? '♂' : '♀'} ${e.height}cm${ikOnAny(e) ? ' · IK' : ''}`, e)) : h('div', { class: 'empty' }, 'No characters yet.')));
   p.append(sec(['Set & Props', h('span', { class: 'ty' }, props.length)], props.length ? props.map(e => item(e.id, e.color, e.name, PROPS[e.type].cat, e)) : h('div', { class: 'empty' }, 'No props. Load a set template or add props.')));
   p.append(h('div', { class: 'grid2' },
     h('button', { class: 'btn sm danger', onclick: () => { if (!confirm('Remove all props?')) return; props.forEach(e => removeEntity(e.id)); commit(); renderOutliner(); } }, 'Clear props'),
@@ -2181,6 +2408,36 @@ function renderOutliner() {
    Right: Object panel
    ===================================================================== */
 let objRefs = {};
+function ikSection(e) {
+  const limbs = Object.keys(IK_LIMBS), allOn = limbs.every(k => e.ik.limbs[k]);
+  const others = [...ents.values()].filter(o => o.kind === 'character' && o !== e);
+  const refresh = () => { ikUpdate(e); renderObjPanel(); renderOutliner(); commit(); };
+  return sec(['Inverse Kinematics', h('span', { class: 'ty', style: ikOnAny(e) ? 'color:#9fc6ff' : '' }, ikOnAny(e) ? 'IK ON' : 'FK')],
+    check('IK on all limbs', allOn, v => { for (const k of limbs) ikSetLimb(e, k, v); refresh(); toast(v ? 'IK on – drag the coloured hand/foot spheres (G)' : 'IK off – pose kept'); }),
+    h('div', { class: 'chips', style: 'margin-bottom:10px' }, limbs.map(k => h('span', { class: 'chip' + (e.ik.limbs[k] ? ' on' : ''), onclick: () => { ikSetLimb(e, k, !e.ik.limbs[k]); refresh(); } }, IK_LIMBS[k].label))),
+    row('Head look-at', select_([['none', '— Off —'], ['camera', '🎥 Active camera'], ...others.map(o => [o.id, '🧍 ' + o.name])], e.ik.look, v => { e.ik.look = v; refresh(); })),
+    ikOnAny(e) ? h('div', { class: 'grid2' },
+      h('button', { class: 'btn sm', title: 'Re-place all handles on the current pose', onclick: () => { ikRebake(e); refresh(); } }, '⌖ Snap handles'),
+      h('button', { class: 'btn sm', title: 'Keep the pose, switch back to joint rotation', onclick: () => { for (const k of limbs) e.ik.limbs[k] = false; refresh(); } }, '⏏ Bake to FK')) : null,
+    h('p', { class: 'hint', style: 'margin-top:8px' }, ikOnAny(e)
+      ? 'Click a sphere (hand / foot) and press G to move it – the arm or leg bends to follow. Diamonds set which way the elbow / knee points. Move the hips (Pose Mode → Hips → G) and IK feet stay planted.'
+      : 'Turn on IK to pose arms and legs by dragging hands and feet instead of rotating each joint.'));
+}
+function renderIKHandlePanel(p, e) {
+  const L = IK_LIMBS[sel.ik.limb], isT = sel.ik.part === 't';
+  p.append(sec([`🎯 IK · ${isT ? L.endLabel + ' target' : L.midLabel + ' pole'}`, h('span', { class: 'ty' }, e.name)],
+    h('p', { class: 'hint', style: 'margin-bottom:10px' }, isT
+      ? `Press G (or use the Move tool) to drag the ${L.endLabel.toLowerCase()} – the ${L.label.toLowerCase()} solves to reach it. X / Y / Z constrain, numbers type an exact distance.`
+      : `Move this diamond to choose which way the ${L.midLabel.toLowerCase()} points.`),
+    h('div', { class: 'grid2' },
+      h('button', { class: 'btn sm primary', onclick: () => startModal('G') }, '✥ Move (G)'),
+      h('button', { class: 'btn sm', onclick: () => select(e.id, null, false, { limb: sel.ik.limb, part: isT ? 'p' : 't' }) }, isT ? '◇ Select pole' : '● Select target'),
+      h('button', { class: 'btn sm', onclick: () => { ikInitLimb(e, sel.ik.limb); ikUpdate(e); commit(); } }, '⌖ Snap to pose'),
+      h('button', { class: 'btn sm', onclick: () => { ikResetLimb(e, sel.ik.limb); commit(); } }, '↺ Reset limb'),
+      h('button', { class: 'btn sm danger', onclick: () => { ikSetLimb(e, sel.ik.limb, false); select(e.id); commit(); } }, '✕ IK off (keep pose)'),
+      h('button', { class: 'btn sm', onclick: () => select(e.id) }, '← Character'))));
+  p.append(ikSection(e));
+}
 function renderObjPanel() {
   const p = $('#p-obj'); p.innerHTML = ''; objRefs = {};
   if (!sel) {
@@ -2191,6 +2448,7 @@ function renderObjPanel() {
   }
   if (sel.id === '__camera') { p.append(h('div', { class: 'empty' }, h('b', { style: `color:${cam.color}` }, `● ${cam.name}`), ' selected (active).', h('br'), 'Press G to move or R to rotate it.', h('br'), h('br'), h('button', { class: 'btn sm', onclick: () => switchTab('R', 'cam') }, 'Open Camera settings'))); return; }
   const e = ents.get(sel.id); if (!e) return;
+  if (sel.ik && e.kind === 'character') return renderIKHandlePanel(p, e);
   const actions = h('div', { class: 'grid3', style: 'margin-top:4px' },
     h('button', { class: 'btn sm', onclick: () => frameSelected() }, 'Frame'),
     h('button', { class: 'btn sm', onclick: () => { duplicateSel(); commit(); } }, 'Duplicate'),
@@ -2208,6 +2466,7 @@ function renderObjPanel() {
       row('Colour', color(e.color, v => setCharColor(e, v), () => { commit(); renderOutliner(); })),
       row('Height (cm)', slider({ min: 120, max: 215, step: 1, value: e.height, onInput: v => { e.height = v; e.root.scale.setScalar(v / BASE_HEIGHT[e.gender]); }, onChange: () => { commit(); renderOutliner(); } })),
       row('Facing (Z°)', objRefs.rz), ...posRows(30), actions));
+    p.append(ikSection(e));
     p.append(sec([`Frame with ${cam.name}`], h('div', { class: 'chips' }, ['ECU', 'CU', 'MCU', 'MS', 'MLS', 'FS', 'WS', 'OTS', 'Two', 'POV'].map(k => h('span', { class: 'chip', onclick: () => applyFraming(SHOT_SIZES.find(s => sizeKey(s) === k)) }, k === 'Two' ? 'Two Shot' : k)))));
     const poseNames = [...Object.keys(POSES), ...Object.keys(project.customPoses)];
     p.append(sec('Pose Presets',
@@ -2215,24 +2474,26 @@ function renderObjPanel() {
         h('span', { class: 'chip', title: project.customPoses[n] ? 'Custom pose' : '', onclick: () => { applyPreset(e, n); commit(); refreshObjValues(); } }, (project.customPoses[n] ? '★ ' : '') + n))),
       h('div', { class: 'grid3' },
         h('button', { class: 'btn sm', onclick: () => { mirrorPose(e); commit(); refreshObjValues(); } }, '⇋ Mirror'),
-        h('button', { class: 'btn sm', onclick: () => { snapToFloor(e); commit(); refreshObjValues(); } }, '⤓ Floor'),
+        h('button', { class: 'btn sm', onclick: () => { snapToFloor(e); ikRebake(e); commit(); refreshObjValues(); } }, '⤓ Floor'),
         h('button', { class: 'btn sm', onclick: () => { applyPreset(e, 'Stand'); commit(); refreshObjValues(); } }, '↺ Reset'),
         h('button', { class: 'btn sm', onclick: () => { clipboardPose = getPose(e); toast('Pose copied'); } }, 'Copy'),
-        h('button', { class: 'btn sm', onclick: () => { if (!clipboardPose) return toast('Copy a pose first'); setPose(e, clipboardPose, true); commit(); refreshObjValues(); } }, 'Paste'),
+        h('button', { class: 'btn sm', onclick: () => { if (!clipboardPose) return toast('Copy a pose first'); setPose(e, clipboardPose, true); ikRebake(e); commit(); refreshObjValues(); } }, 'Paste'),
         h('button', { class: 'btn sm', onclick: () => { const n = prompt('Save pose as:', 'My Pose'); if (!n) return; project.customPoses[n] = getPose(e); scheduleSave(); renderObjPanel(); toast(`Pose "${n}" saved`); } }, '★ Save'))));
     const jn = sel.joint || 'hips';
     const order = ['head', 'neck', 'chest', 'spine', 'hips', 'shoulder_R', 'shoulder_L', 'elbow_R', 'elbow_L', 'wrist_R', 'wrist_L', 'hip_R', 'hip_L', 'knee_R', 'knee_L', 'ankle_R', 'ankle_L'];
-    const jointChip = n => h('span', { class: 'chip' + (interact === 'pose' && jn === n ? ' on' : '') + (['hips', 'spine', 'chest', 'neck', 'head'].includes(n) ? ' c' : ''), onclick: () => { sel.joint = n; if (interact !== 'pose') setInteract('pose'); else { attachGizmo(); refreshHighlight(); renderObjPanel(); updateStatus(); } } }, JOINT_LABEL[n]);
+    const jointChip = n => h('span', { class: 'chip' + (interact === 'pose' && jn === n ? ' on' : '') + (['hips', 'spine', 'chest', 'neck', 'head'].includes(n) ? ' c' : '') + (ikDriven(e, n) ? ' ik' : ''), title: ikDriven(e, n) ? 'Driven by IK' : '', onclick: () => { sel.joint = n; sel.ik = null; if (interact !== 'pose') setInteract('pose'); else { attachGizmo(); refreshHighlight(); renderObjPanel(); updateStatus(); } } }, JOINT_LABEL[n]);
     const j = e.joints[jn];
+    const driven = ikDriven(e, jn);
     objRefs.joint = ['x', 'y', 'z'].map(ax => slider({ min: -180, max: 180, step: 1, value: j.rotation[ax] * R2D, onInput: v => { j.rotation[ax] = v * D2R; updateLabel(e); }, onChange: commit }));
     objRefs.hipsY = slider({ min: -0.5, max: 1.6, step: 0.01, value: e.joints.hips.position.y, onInput: v => { e.joints.hips.position.y = v; updateLabel(e); }, onChange: commit });
     p.append(sec(['Joints', interact === 'pose' ? h('span', { class: 'ty', style: 'color:var(--accent2)' }, 'R to rotate') : h('button', { class: 'btn xs', onclick: () => setInteract('pose') }, 'Pose Mode (Tab)')],
       h('div', { class: 'joints' }, order.map(jointChip)),
       h('div', { class: 'hint', style: 'margin-bottom:8px' }, 'Editing: ', h('b', { style: 'color:var(--text)' }, JOINT_LABEL[jn])),
-      ...objRefs.joint.map((s, i) => row(AXIS_HINT[jn][i], s)),
+      driven ? h('div', { class: 'warn' }, `${JOINT_LABEL[jn]} is driven by IK${jn === 'head' || jn === 'neck' ? ' (head look-at)' : ''}. Move the IK handle instead, or turn IK off to rotate it directly.`) : null,
+      ...(driven ? [] : objRefs.joint.map((s, i) => row(AXIS_HINT[jn][i], s))),
       h('div', { class: 'grid2', style: 'margin-bottom:12px' },
-        h('button', { class: 'btn sm', onclick: () => { j.rotation.set(0, 0, 0); updateLabel(e); commit(); refreshObjValues(); } }, 'Reset joint'),
-        h('button', { class: 'btn sm', onclick: () => { for (const n of JOINTS) e.joints[n].rotation.set(0, 0, 0); e.joints.hips.position.copy(e.hipsDefault); snapToFloor(e); commit(); refreshObjValues(); } }, 'Reset all')),
+        h('button', { class: 'btn sm', disabled: driven, onclick: () => { j.rotation.set(0, 0, 0); updateLabel(e); commit(); refreshObjValues(); } }, 'Reset joint'),
+        h('button', { class: 'btn sm', onclick: () => { for (const n of JOINTS) e.joints[n].rotation.set(0, 0, 0); e.joints.hips.position.copy(e.hipsDefault); snapToFloor(e); ikRebake(e); commit(); refreshObjValues(); } }, 'Reset all')),
       row('Hips height', objRefs.hipsY)));
   } else {
     const d = PROPS[e.type];
@@ -2253,7 +2514,7 @@ function renderObjPanel() {
   }
 }
 function refreshObjValues() {
-  if (!sel || sel.id === '__camera') return;
+  if (!sel || sel.id === '__camera' || sel.ik) return;
   const e = ents.get(sel.id); if (!e) return;
   const pr = e.root.position;
   objRefs.x?.set(pr.x); objRefs.y?.set(-pr.z); objRefs.z?.set(pr.y);
@@ -2337,7 +2598,7 @@ function refreshCamValues() {
 }
 
 /* =====================================================================
-   Right: Shot panel  (shot size / angle / movement drive the active camera)
+   Right: Shot panel
    ===================================================================== */
 function renderShotPanel() {
   const p = $('#p-shot'); if (!p) return; const st = p.scrollTop; p.innerHTML = '';
@@ -2356,10 +2617,13 @@ function renderShotPanel() {
     row('Angle', select_(ANGLES.map(x => [x, x]), meta.angle, v => { meta.angle = v; if (env.autoShot) applyAngle(v); else { markDirty(); scheduleSave(); } })),
     row('Movement', select_(MOVES.filter(x => x !== 'Custom (keyed)' || cam.move?.type === x).map(x => [x, x]), cam.move ? cam.move.type : meta.move, v => { meta.move = v; if (env.autoShot) { setCamMove(cam, v); renderCamPanel(); commit(); } else { markDirty(); scheduleSave(); } })),
     row('Duration (s)', input(meta.duration, v => { meta.duration = v; if (cam.move && +v > 0) { cam.move.duration = +v; updatePlaybar(); scheduleCommit(); } markDirty(); scheduleSave(); }, { type: 'number', min: 0, step: 0.5 })),
+    cam.move ? row('Board image', seg([['start', '⏮ Start'], ['end', 'End ⏭']], cam.move.board || 'start', v => setBoardKey(v))) : null,
     cam.move ? h('div', { class: 'grid3', style: 'margin-bottom:8px' },
       h('button', { class: 'btn sm', onclick: () => setPreview(0) }, '⏮'),
       h('button', { class: 'btn sm primary', onclick: togglePlay }, '▶ Play move'),
       h('button', { class: 'btn sm', onclick: () => setPreview(1) }, '⏭')) : null));
+  if (fr && fr.move && fr.thumbEnd) p.append(sec('This Frame', row('Board image', seg([['start', '⏮ Start'], ['end', 'End ⏭']], fr.key || 'start', v => setFrameKey(fr, v))),
+    h('p', { class: 'hint' }, 'Which end of the move is the main storyboard image for this frame. The other end shows as a corner inset in the PDF.')));
   const ta = (k, ph) => { const t = h('textarea', { class: 'ctl', placeholder: ph, rows: 3 }); t.value = meta[k] || ''; t.addEventListener('input', () => set(k)(t.value)); return t; };
   p.append(sec('Description',
     h('div', { class: 'row full' }, h('label', {}, 'Action'), ta('action', 'What happens in the frame…')),
@@ -2392,9 +2656,8 @@ function frameShotFields() {
   const m = cam.move;
   if (m) { if (MOVES.includes(m.type)) meta.move = m.type; meta.duration = m.duration; }
   else if (meta.move !== 'Static / Locked' && MOVE_DEFS[meta.move]) meta.move = 'Static / Locked';
-  const out = { thumb: m ? captureAt(0) : captureImage(), thumbEnd: m ? captureAt(1) : null, state: serialize(), meta: clone(meta), camName: cam.name, camColor: cam.color,
+  return { thumb: m ? captureAt(0) : captureImage(), thumbEnd: m ? captureAt(1) : null, key: m ? (m.board || 'start') : 'start', state: serialize(), meta: clone(meta), camName: cam.name, camColor: cam.color,
     move: m ? { type: m.type, amount: m.amount, duration: m.duration, ease: m.ease, start: clone(m.start), end: clone(m.end) } : null };
-  return out;
 }
 function makeFrame() { return { id: uid(), ...frameShotFields() }; }
 function captureFrame() {
@@ -2404,7 +2667,7 @@ function captureFrame() {
   if (i >= 0) project.frames.splice(i + 1, 0, f); else project.frames.push(f);
   activeFrame = f.id;
   renderStrip(); renderShotPanel(); markDirty(); scheduleSave(); updateStatus();
-  toast(`Frame captured · ${f.camName}${f.move ? ' · ' + f.move.type : ''} · Sc ${f.meta.scene} / Sh ${f.meta.shot}`);
+  toast(`Frame captured · ${f.camName}${f.move ? ' · ' + f.move.type + (f.key === 'end' ? ' (END image)' : '') : ''} · Sc ${f.meta.scene} / Sh ${f.meta.shot}`);
   requestAnimationFrame(() => scrollToFrame(f.id));
 }
 function captureAllCams() {
@@ -2436,6 +2699,7 @@ function updateFrame() {
 function loadFrame(id) {
   const f = project.frames.find(x => x.id === id); if (!f) return;
   hist.lock = true; deserialize(clone(f.state)); hist.lock = false;
+  if (cam.move && f.key) cam.move.board = f.key;
   meta = { ...defaultMeta(), ...clone(f.meta) }; activeFrame = id;
   select(null, null, true); commit(); refreshAllPanels(); renderStrip(); markDirty(); scheduleSave();
 }
@@ -2445,14 +2709,17 @@ function renderStrip() {
   $('#fCount').textContent = `${project.frames.length} frame${project.frames.length === 1 ? '' : 's'}`;
   project.frames.forEach((f, i) => {
     const m = f.meta, c = frameCam(f);
-    const img = h('div', { class: 'img', style: `background-image:url(${f.thumb})` });
-    if (f.move) decorateFrame(f).then(u => { img.style.backgroundImage = `url(${u})`; });
+    const img = h('div', { class: 'img', style: `background-image:url(${frameMain(f)})` });
+    if (f.move) decorateFrame(f, frameMain(f)).then(u => { img.style.backgroundImage = `url(${u})`; });
+    const swappable = f.move && f.thumbEnd;
     const card = h('div', { class: 'frame' + (f.id === activeFrame ? ' on' : ''), 'data-id': f.id, draggable: 'true', onclick: () => loadFrame(f.id) },
       img,
       h('span', { class: 'num' }, i + 1),
+      swappable ? h('span', { class: 'keytag', title: 'Storyboard image' }, f.key === 'end' ? 'END' : 'START') : null,
       h('span', { class: 'camtag', style: `background:${f.camColor || c.color || '#ff5a4f'}` }, (f.camName || c.name || 'A-Cam').toUpperCase()),
       f.move ? h('span', { class: 'mvtag', title: `${f.move.type} · ${f.move.duration}s` }, `↝ ${MOVE_SHORT[f.move.type] || 'MOVE'}`) : null,
       h('div', { class: 'ops' },
+        swappable ? h('button', { title: `Use the ${f.key === 'end' ? 'START' : 'END'} of the move as the storyboard image`, onclick: ev => { ev.stopPropagation(); setFrameKey(f, f.key === 'end' ? 'start' : 'end'); } }, '⇆') : null,
         h('button', { title: 'Move left', onclick: ev => { ev.stopPropagation(); moveFrame(i, -1); } }, '◀'),
         h('button', { title: 'Move right', onclick: ev => { ev.stopPropagation(); moveFrame(i, 1); } }, '▶'),
         h('button', { title: 'Duplicate', onclick: ev => { ev.stopPropagation(); const d = clone(f); d.id = uid(); project.frames.splice(i + 1, 0, d); renderStrip(); scheduleSave(); } }, '⧉'),
@@ -2487,7 +2754,6 @@ function headInfo(e) {
 }
 function jointPos(e, n) { const v = new THREE.Vector3(); e.joints[n].getWorldPosition(v); return v; }
 function visibleChars() { return [...ents.values()].filter(e => e.kind === 'character' && !e.hidden); }
-// Subject = selected character, else the character closest to the centre of the active camera's view
 function pickSubject() {
   const e = sel && sel.id !== '__camera' ? ents.get(sel.id) : null;
   if (e && e.kind === 'character') return e;
@@ -2705,7 +2971,7 @@ function setCamMove(c, type, { keepDur = false } = {}) {
   if (!def) { c.move = null; }
   else {
     const old = c.move;
-    c.move = { type, mode: 'preset', amount: type === 'Rack Focus' ? defaultRack(poseOf(c)) : def.amt, duration: keepDur && old ? old.duration : (def.dur || +meta.duration || 3), ease: def.ease || 'smooth' };
+    c.move = { type, mode: 'preset', amount: type === 'Rack Focus' ? defaultRack(poseOf(c)) : def.amt, duration: keepDur && old ? old.duration : (def.dur || +meta.duration || 3), ease: def.ease || 'smooth', board: old?.board || 'start' };
     computeMove(c);
   }
   if (c === cam && MOVES.includes(type)) { meta.move = type; if (c.move) meta.duration = c.move.duration; }
@@ -2714,12 +2980,31 @@ function setCamMove(c, type, { keepDur = false } = {}) {
 function keyMove(which) {
   clearPreview();
   const p = poseOf(cam);
-  if (!cam.move) cam.move = { type: 'Custom (keyed)', mode: 'keyed', amount: 0, duration: +meta.duration || 3, ease: 'smooth', start: clone(p), end: clone(p) };
+  if (!cam.move) cam.move = { type: 'Custom (keyed)', mode: 'keyed', amount: 0, duration: +meta.duration || 3, ease: 'smooth', board: 'start', start: clone(p), end: clone(p) };
   const m = cam.move;
   if (m.mode === 'preset') { m.mode = 'keyed'; m.type = 'Custom (keyed)'; }
   m[which] = clone(p); m.shake = m.shake || 0;
   applyCam(); renderCamPanel(); updatePlaybar(); commit();
   toast(`${cam.name}: ${which.toUpperCase()} key set${which === 'end' && m.start ? ' – press Space to preview' : ''}`);
+}
+
+/* ---------- Storyboard image: Start / End ---------- */
+const frameMain = f => (f.key === 'end' && f.thumbEnd) ? f.thumbEnd : f.thumb;
+const frameInset = f => (f.key === 'end' && f.thumbEnd) ? f.thumb : f.thumbEnd;
+function setBoardKey(v) {
+  if (!cam.move) return toast('Choose a camera move first');
+  cam.move.board = v;
+  const fr = project.frames.find(f => f.id === activeFrame);
+  renderCamPanel(); renderShotPanel(); updateHUD(); updatePlaybar(); commit();
+  toast(`${cam.name}: storyboard image = ${v === 'end' ? 'END' : 'START'} of the move${fr ? ' (press Shift+I to update the selected frame)' : ''}`);
+}
+function setFrameKey(f, v) {
+  if (!f.move || !f.thumbEnd) return;
+  f.key = v;
+  const c = (f.state.cams || []).find(x => x.id === f.state.activeCam); if (c?.move) c.move.board = v;
+  if (f.id === activeFrame && cam.move) cam.move.board = v;
+  renderStrip(); renderShotPanel(); scheduleSave();
+  toast(`Frame ${project.frames.indexOf(f) + 1}: storyboard image = ${v === 'end' ? 'END' : 'START'} of the move`);
 }
 
 /* ---------- Playback ---------- */
@@ -2745,7 +3030,7 @@ function updatePlaybar() {
   const pb = $('#timeline'); if (!pb || !cam) return;
   const m = cam.move, has = !!m, d = moveDur(), t = previewT ?? 0;
   $('#tlCam').innerHTML = `<i style="background:${cam.color}"></i>${cam.name}`;
-  $('#tlMove').textContent = has ? `${m.type}${m.mode === 'keyed' ? '' : MOVE_DEFS[m.type] ? ` · ${r2(m.amount, 2)}${MOVE_DEFS[m.type].unit}` : ''}` : 'No move · Static';
+  $('#tlMove').textContent = has ? `${m.type}${m.mode === 'keyed' ? '' : MOVE_DEFS[m.type] ? ` · ${r2(m.amount, 2)}${MOVE_DEFS[m.type].unit}` : ''} · board ${(m.board || 'start').toUpperCase()}` : 'No move · Static';
   $('#tlPlay').textContent = playing ? '⏸' : '▶';
   $('#tlPlay').classList.toggle('on', !!playing);
   $$('#tlStart,#tlPlay,#tlEnd,#tlScrub').forEach(b => b.disabled = !has);
@@ -2758,7 +3043,7 @@ function updatePlaybar() {
 /* =====================================================================
    3a) Motion arrows on storyboard images
    ===================================================================== */
-function drawMoveOverlay(g, W, H, mv) {
+function drawMoveOverlay(g, W, H, mv, atEnd = false) {
   const type = mv.type, lw = Math.max(3, W * 0.0065);
   const stroke = (fn, w = lw) => { g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = 'rgba(0,0,0,.75)'; g.lineWidth = w * 2.6; fn(); g.stroke(); g.strokeStyle = '#fff'; g.lineWidth = w; fn(); g.stroke(); g.restore(); };
   const head = (x, y, a, sz = lw * 5) => { g.save(); g.translate(x, y); g.rotate(a); g.beginPath(); g.moveTo(sz * 0.4, 0); g.lineTo(-sz, sz * 0.75); g.lineTo(-sz * 0.65, 0); g.lineTo(-sz, -sz * 0.75); g.closePath(); g.lineWidth = lw * 1.6; g.strokeStyle = 'rgba(0,0,0,.75)'; g.stroke(); g.fillStyle = '#fff'; g.fill(); g.restore(); };
@@ -2768,7 +3053,7 @@ function drawMoveOverlay(g, W, H, mv) {
   const s0 = mv.start || {}, e0 = mv.end || {};
   const corners = (s, inward) => { const r = { x: (W - W * s) / 2, y: (H - H * s) / 2, w: W * s, hh: H * s }; const o = [[W * 0.05, H * 0.07], [W * 0.95, H * 0.07], [W * 0.05, H * 0.93], [W * 0.95, H * 0.93]], ii = [[r.x, r.y], [r.x + r.w, r.y], [r.x, r.y + r.hh], [r.x + r.w, r.y + r.hh]]; o.forEach((p, k) => inward ? arrow(p[0], p[1], ii[k][0] + (p[0] - ii[k][0]) * 0.12, ii[k][1] + (p[1] - ii[k][1]) * 0.12) : arrow(ii[k][0], ii[k][1], p[0] + (ii[k][0] - p[0]) * 0.1, p[1] + (ii[k][1] - p[1]) * 0.1)); };
   const amt = mv.amount, unit = MOVE_DEFS[type]?.unit || '';
-  const txt = `${(MOVE_SHORT[type] || type).toUpperCase()}${MOVE_DEFS[type] && type !== 'Handheld' ? ` ${r2(amt, 1)}${unit}` : ''} · ${r2(mv.duration || 0, 1)}s`;
+  const txt = `${(MOVE_SHORT[type] || type).toUpperCase()}${MOVE_DEFS[type] && type !== 'Handheld' ? ` ${r2(amt, 1)}${unit}` : ''} · ${r2(mv.duration || 0, 1)}s${atEnd ? ' · END' : ''}`;
   switch (type) {
     case 'Pan Left': case 'Truck Left': arrow(W * 0.7, H * 0.16, W * 0.3, H * 0.16); break;
     case 'Pan Right': case 'Truck Right': arrow(W * 0.3, H * 0.16, W * 0.7, H * 0.16); break;
@@ -2776,10 +3061,10 @@ function drawMoveOverlay(g, W, H, mv) {
     case 'Tilt Up': case 'Pedestal Up': case 'Crane / Jib': arrow(W * 0.9, H * 0.72, W * 0.9, H * 0.28); break;
     case 'Tilt Down': case 'Pedestal Down': arrow(W * 0.9, H * 0.28, W * 0.9, H * 0.72); break;
     case 'Drone / Aerial': arrow(W * 0.12, H * 0.8, W * 0.32, H * 0.3); arrow(W * 0.88, H * 0.8, W * 0.68, H * 0.3); break;
-    case 'Zoom In': { const s = clamp((s0.focal || 1) / (e0.focal || 1), 0.15, 0.95); dashedRect(s); corners(s, true); break; }
-    case 'Zoom Out': { const s = clamp((e0.focal || 1) / (s0.focal || 1), 0.15, 0.95); corners(s, false); break; }
-    case 'Dolly In': case 'Steadicam': case 'Gimbal': { const D = Math.max(0.5, s0.focus || 3); const s = clamp((D - amt) / D, 0.2, 0.9); dashedRect(s); corners(s, true); break; }
-    case 'Dolly Out': { const D = Math.max(0.5, s0.focus || 3); const s = clamp(D / (D + amt), 0.2, 0.9); corners(s, false); break; }
+    case 'Zoom In': { const s = clamp((s0.focal || 1) / (e0.focal || 1), 0.15, 0.95); if (atEnd) corners(0.72, true); else { dashedRect(s); corners(s, true); } break; }
+    case 'Zoom Out': { const s = clamp((e0.focal || 1) / (s0.focal || 1), 0.15, 0.95); if (atEnd) { dashedRect(s); corners(s, false); } else corners(s, false); break; }
+    case 'Dolly In': case 'Steadicam': case 'Gimbal': { const D = Math.max(0.5, s0.focus || 3); const s = clamp((D - amt) / D, 0.2, 0.9); if (atEnd) corners(0.72, true); else { dashedRect(s); corners(s, true); } break; }
+    case 'Dolly Out': { const D = Math.max(0.5, s0.focus || 3); const s = clamp(D / (D + amt), 0.2, 0.9); if (atEnd) { dashedRect(s); corners(s, false); } else corners(s, false); break; }
     case 'Dolly Zoom (Vertigo)': corners(0.55, false); dashedRect(0.42); break;
     case 'Arc / Orbit': { const cw = amt >= 0; const a0 = cw ? Math.PI * 0.85 : Math.PI * 0.15, a1 = cw ? Math.PI * 0.15 : Math.PI * 0.85; const cx = W / 2, cy = H * 0.55, rx = W * 0.38, ry = H * 0.32; const pt = a => [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]; stroke(() => { g.beginPath(); for (let i = 0; i <= 30; i++) { const a = a0 + (a1 - a0) * i / 30 * 0.94; const [x, y] = pt(a); i ? g.lineTo(x, y) : g.moveTo(x, y); } }); const [x2, y2] = pt(a0 + (a1 - a0)), [x1, y1] = pt(a0 + (a1 - a0) * 0.9); head(x2, y2, Math.atan2(y2 - y1, x2 - x1)); break; }
     case 'Handheld': stroke(() => { g.beginPath(); for (let i = 0; i <= 10; i++) { const x = W * (0.72 + i * 0.022), y = H * 0.12 + (i % 2 ? -1 : 1) * H * 0.025; i ? g.lineTo(x, y) : g.moveTo(x, y); } }); break;
@@ -2789,11 +3074,12 @@ function drawMoveOverlay(g, W, H, mv) {
   label(txt);
 }
 const decoCache = new Map();
-function decorateFrame(f, src = f.thumb) {
+function decorateFrame(f, src = frameMain(f)) {
   if (!f.move) return Promise.resolve(src);
-  const key = `${f.id}|${src.length}|${f.move.type}|${f.move.amount}|${f.move.duration}`;
+  const atEnd = src === f.thumbEnd && f.thumbEnd !== f.thumb;
+  const key = `${f.id}|${src.length}|${atEnd}|${f.move.type}|${f.move.amount}|${f.move.duration}`;
   if (decoCache.has(key)) return Promise.resolve(decoCache.get(key));
-  return new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.naturalWidth; c.height = i.naturalHeight; const g = c.getContext('2d'); g.drawImage(i, 0, 0); drawMoveOverlay(g, c.width, c.height, f.move); const u = c.toDataURL('image/jpeg', 0.88); decoCache.set(key, u); res(u); }; i.onerror = () => res(src); i.src = src; });
+  return new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.naturalWidth; c.height = i.naturalHeight; const g = c.getContext('2d'); g.drawImage(i, 0, 0); drawMoveOverlay(g, c.width, c.height, f.move, atEnd); const u = c.toDataURL('image/jpeg', 0.88); decoCache.set(key, u); res(u); }; i.onerror = () => res(src); i.src = src; });
 }
 
 /* =====================================================================
@@ -2808,16 +3094,15 @@ function framingSections() {
       h('p', { class: 'hint', style: 'margin-top:8px' }, 'Frames the selected character (or the one nearest the centre of frame) with the current lens. Two Shot / OTS use the nearest other character; Insert frames a selected prop.')),
     sec('Camera Angle', angles),
   ];
-  // Camera move
   const m = cam.move, def = m && MOVE_DEFS[m.type];
   const body = [row('Move', select_([['', '— Static / none —'], ...Object.keys(MOVE_DEFS).map(k => [k, k]), ...(m && m.mode === 'keyed' ? [['Custom (keyed)', 'Custom (keyed)']] : [])], m ? m.type : '', v => { setCamMove(cam, v || 'Static / Locked'); renderCamPanel(); renderShotPanel(); commit(); }))];
   if (m) {
     if (def && m.mode === 'preset') body.push(row(`Amount (${def.unit})`, slider({ min: def.min, max: def.max, step: def.unit === '°' ? 1 : 0.05, value: m.amount, onInput: v => { clearPreview(); m.amount = v; computeMove(cam); applyCam(); updatePlaybar(); }, onChange: () => { commit(); } })));
     body.push(row('Duration (s)', slider({ min: 0.2, max: 30, step: 0.1, value: m.duration, onInput: v => { m.duration = v; meta.duration = v; updatePlaybar(); }, onChange: () => { renderShotPanel(); commit(); } })));
     body.push(row('Easing', select_(Object.entries(EASE_LABELS), m.ease, v => { m.ease = v; commit(); })));
-    if (m.mode === 'preset' && !def?.shake) {}
     body.push(row('Shake', slider({ min: 0, max: 3, step: 0.05, value: m.shake || 0, onInput: v => { m.shake = v; if (m.mode === 'preset' && m.type === 'Handheld') m.amount = v; }, onChange: () => commit() })));
-    body.push(h('div', { class: 'hint', style: 'margin:2px 0 8px' }, m.mode === 'preset' ? 'Preset move – it follows the camera when you reposition it.' : 'Keyed move – start and end are fixed where you keyed them.'));
+    body.push(row('Board image', seg([['start', '⏮ Start'], ['end', 'End ⏭']], m.board || 'start', v => setBoardKey(v))));
+    body.push(h('div', { class: 'hint', style: 'margin:2px 0 8px' }, 'Board image picks which end of the move is the main storyboard frame (the other end becomes the corner inset). ' + (m.mode === 'preset' ? 'Preset moves follow the camera when you reposition it.' : 'Keyed moves stay where you keyed them.')));
   }
   body.push(h('div', { class: 'grid2' },
     h('button', { class: 'btn sm', title: 'Store the camera\'s current position as the move START', onclick: () => keyMove('start') }, '◆ Key Start'),
@@ -2841,9 +3126,11 @@ function aniOpts() { return { res: $('#aniRes').value, slate: $('#aniSlate').che
 function renderAniFrame(g, OUT, f, i, n, t, clock, o) {
   const P = camPose(cam, t, clock);
   setShotFromPose(P, cam);
+  for (const e of ents.values()) if (e.kind === 'character' && e.ik?.look === 'camera') ikUpdate(e);
   const A = aspectOf(); let rw = OUT.width, rh = Math.round(OUT.width / A); if (rh > OUT.height) { rh = OUT.height; rw = Math.round(OUT.height * A); }
   if (capRenderer.domElement.width !== rw || capRenderer.domElement.height !== rh) capRenderer.setSize(rw, rh, false);
   shotCam.aspect = A; shotCam.updateProjectionMatrix();
+  helpersVisible(false);
   capRenderer.render(scene, shotCam);
   g.fillStyle = '#000'; g.fillRect(0, 0, OUT.width, OUT.height);
   const rx = (OUT.width - rw) / 2, ry = (OUT.height - rh) / 2;
@@ -2860,7 +3147,6 @@ function renderAniFrame(g, OUT, f, i, n, t, clock, o) {
     g.fillStyle = '#d6d9df'; g.font = `500 ${Math.round(fs * 0.8)}px Helvetica, Arial, sans-serif`; g.fillText(sub, rx + pad * 2, ry + pad + fs * 1.95);
     g.font = `600 ${Math.round(fs * 0.8)}px Helvetica, Arial, sans-serif`; const ct = `${i + 1} / ${n}`; const cw = g.measureText(ct).width;
     g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(rx + rw - cw - pad * 3, ry + pad, cw + pad * 2, fs * 1.4); g.fillStyle = '#fff'; g.fillText(ct, rx + rw - cw - pad * 2, ry + pad + fs * 0.7);
-    // progress bar
     g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(rx, ry + rh - 4, rw, 4); g.fillStyle = f.camColor || cam.color; g.fillRect(rx, ry + rh - 4, rw * t, 4);
   }
   const lines = [];
@@ -2914,6 +3200,7 @@ async function runAnimatic(record) {
       const f = frames[i];
       if (rec && rec.state === 'recording') rec.pause();
       hist.lock = true; deserialize(clone(f.state)); hist.lock = false;
+      ikTickAll();
       helpersVisible(false); tcObj.visible = false; frameLook(true);
       if (rec && rec.state === 'paused') rec.resume();
       const dur = Math.max(0.3, cam.move ? +cam.move.duration : (+f.meta.duration || 3));
@@ -2989,13 +3276,15 @@ async function buildStoryboardPDF(o) {
     cur.push(f);
   });
   if (cur.length || !pages.length) pages.push(cur);
-  const sizes = new Map(), thumbs = new Map(), ends = new Map();
+  const sizes = new Map(), thumbs = new Map(), insets = new Map();
   for (const f of project.frames) {
-    sizes.set(f.id, await imgSize(f.thumb));
-    let t = o.arrows && f.move ? await decorateFrame(f) : f.thumb;
+    const main = frameMain(f);
+    sizes.set(f.id, await imgSize(main));
+    let t = o.arrows && f.move ? await decorateFrame(f, main) : main;
     if (o.grey) t = await toGrey(t);
     thumbs.set(f.id, t);
-    if (o.endInset && f.thumbEnd) ends.set(f.id, o.grey ? await toGrey(f.thumbEnd) : f.thumbEnd);
+    const ins = frameInset(f);
+    if (o.endInset && f.move && ins) insets.set(f.id, { src: o.grey ? await toGrey(ins) : ins, label: f.key === 'end' ? 'START' : 'END' });
   }
   pages.forEach((items, pi) => {
     if (pi) doc.addPage();
@@ -3017,15 +3306,18 @@ async function buildStoryboardPDF(o) {
         const [iw, ih] = sizes.get(f.id); const [w2, h2] = fitIn(iw, ih, bw, bh);
         const ix = bx + (bw - w2) / 2, iy = y + (bh - h2) / 2;
         doc.addImage(thumbs.get(f.id), 'JPEG', ix, iy, w2, h2, undefined, 'FAST');
-        if (ends.has(f.id)) {
+        if (insets.has(f.id)) {
+          const ins = insets.get(f.id);
           const ew = w2 * 0.34, eh = h2 * 0.34, ex = ix + w2 - ew - 1.4, ey = iy + 1.4;
           doc.setFillColor(255, 255, 255); doc.rect(ex - 0.7, ey - 0.7, ew + 1.4, eh + 1.4, 'F');
-          doc.addImage(ends.get(f.id), 'JPEG', ex, ey, ew, eh, undefined, 'FAST');
-          doc.setFillColor(0, 0, 0); doc.rect(ex, ey + eh - 3, 8, 3, 'F');
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(255); doc.text('END', ex + 1, ey + eh - 0.8);
+          doc.addImage(ins.src, 'JPEG', ex, ey, ew, eh, undefined, 'FAST');
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5);
+          const lw = doc.getTextWidth(ins.label) + 2;
+          doc.setFillColor(0, 0, 0); doc.rect(ex, ey + eh - 3, lw, 3, 'F');
+          doc.setTextColor(255); doc.text(ins.label, ex + 1, ey + eh - 0.8);
         }
         if (o.fill && o.cam) {
-          const nm = pdfSafe((f.camName || frameCam(f).name || 'A-Cam').toUpperCase());
+          const nm = pdfSafe((f.camName || frameCam(f).name || 'A-Cam').toUpperCase()) + (f.move && f.thumbEnd && f.key === 'end' ? ' · END' : '');
           doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5);
           const tw = doc.getTextWidth(nm) + 3;
           doc.setFillColor(...(o.grey ? [40, 40, 40] : hexRGB(f.camColor || frameCam(f).color))); doc.rect(bx + 1.2, y + 1.2, tw, 4, 'F');
@@ -3451,7 +3743,7 @@ const DB = {
   get(k) { return new Promise((res, rej) => { const t = this.db.transaction('kv').objectStore('kv').get(k); t.onsuccess = () => res(t.result); t.onerror = () => rej(t.error); }); },
   set(k, v) { return new Promise((res, rej) => { const t = this.db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); }); },
 };
-const projectPayload = () => ({ app: 'preproduction-suite', version: 4, title: project.title, frames: project.frames, customPoses: project.customPoses, callsheets: project.cs, working: { state: serialize(), meta, activeFrame }, ui: { pip: env.pip, thirds: env.thirds, safe: env.safe, emu3: env.emu3, autoShot: env.autoShot, loopPlay: env.loopPlay, lockCam }, savedAt: new Date().toISOString() });
+const projectPayload = () => ({ app: 'preproduction-suite', version: 5, title: project.title, frames: project.frames, customPoses: project.customPoses, callsheets: project.cs, working: { state: serialize(), meta, activeFrame }, ui: { pip: env.pip, thirds: env.thirds, safe: env.safe, emu3: env.emu3, autoShot: env.autoShot, loopPlay: env.loopPlay, lockCam }, savedAt: new Date().toISOString() });
 let saveT;
 function scheduleSave() {
   $('#saveState').textContent = 'Unsaved…';
@@ -3518,14 +3810,12 @@ $('#gSafe').onclick = () => { env.safe = !env.safe; renderGuides(); scheduleSave
 $('#bKeys').onclick = openKeys;
 $('#bUndo').onclick = undo; $('#bRedo').onclick = redo;
 $('#bAddFrame').onclick = captureFrame; $('#bUpdateFrame').onclick = updateFrame; $('#bCapAll').onclick = captureAllCams;
-// Timeline
 $('#tlPlay').onclick = () => { togglePlay(); cv.focus(); };
 $('#tlStart').onclick = () => setPreview(0);
 $('#tlEnd').onclick = () => setPreview(1);
 $('#tlScrub').addEventListener('input', ev => setPreview(+ev.target.value / 1000));
 $('#tlLoop').onclick = () => { env.loopPlay = !env.loopPlay; updatePlaybar(); scheduleSave(); toast(env.loopPlay ? 'Loop playback on' : 'Loop playback off'); };
 $('#tlAni').onclick = openAnimatic;
-// Animatic
 $('#aniPlay').onclick = () => runAnimatic(false);
 $('#aniRec').onclick = () => runAnimatic(true);
 $('#aniStopB').onclick = () => { aniStop = true; };
@@ -3566,7 +3856,7 @@ window.addEventListener('blur', () => { if (walk) walk.keys.clear(); });
 /* =====================================================================
    Boot
    ===================================================================== */
-window.__pps = { get cam() { return cam; }, project };
+window.__pps = { get cam() { return cam; }, project, ents, get sel() { return sel; }, select };
 (async function boot() {
   project.cs = csDefault();
   renderAddPanel();
